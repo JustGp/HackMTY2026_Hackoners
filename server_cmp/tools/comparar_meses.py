@@ -63,7 +63,7 @@ def ejecutar(usuario_id: str, parametros: dict) -> dict:
     filas_gastos = gastos_res.data or []
     
     if not filas_gastos:
-        return {"usuario_id": usuario_id, "error": "No hay datos para este periodo"}
+        raise DatabaseError("No hay datos para ese periodo")
 
     # Extraemos el primer y último mes del resultado obtenido
     primer_mes_data = filas_gastos[0]

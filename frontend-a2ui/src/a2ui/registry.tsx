@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react'
 import {
   GraficaComparativa,
+  HistorialChart,
   SimuladorInversion,
   TarjetaResumen,
 } from '../A2UIComponents'
@@ -50,6 +51,11 @@ function SpendComparisonChart({ block, onAction }: BlockProps) {
   )
 }
 
+function HistoryChart({ block }: BlockProps) {
+  if (block.component !== 'historial_chart') return null
+  return <HistorialChart titulo={block.props.title} serie={block.props.serie} />
+}
+
 function SummaryCard({ block, onAction }: BlockProps) {
   if (block.component !== 'summary_card') return null
   return (
@@ -86,6 +92,7 @@ export const COMPONENT_REGISTRY: Record<A2UIBlock['component'], ComponentType<Bl
   text_block: TextBlock,
   clarify_chips: ClarifyChips,
   spend_comparison_chart: SpendComparisonChart,
+  historial_chart: HistoryChart,
   summary_card: SummaryCard,
   investment_simulator: InvestmentSimulator,
 }

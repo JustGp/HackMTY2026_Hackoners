@@ -3,6 +3,8 @@ import {
   BarChart,
   CartesianGrid,
   Legend,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -17,6 +19,32 @@ import type {
 import { Card } from './ui/primitives'
 
 type OnAction = (accion: string, contexto: Record<string, unknown>) => void
+
+export function HistorialChart({
+  titulo,
+  serie,
+}: {
+  titulo?: string
+  serie: Array<{ mes: string; gasto: number }>
+}) {
+  return (
+    <Card>
+      <p className="mb-2 text-sm font-medium text-brand-gray-dark">
+        {titulo ?? 'Historial de gastos'}
+      </p>
+      <ResponsiveContainer width="100%" height={280}>
+        <LineChart data={serie}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="mes" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="gasto" stroke="#d61f26" strokeWidth={3} dot={{ r: 3 }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </Card>
+  )
+}
 
 export function SimuladorInversion({
   saldo_actual,

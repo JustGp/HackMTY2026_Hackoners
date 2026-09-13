@@ -11,6 +11,7 @@ const capabilityBlock = (turnId: string) => ({
       { id: 'view_summary', label: 'Ver mi resumen' },
       { id: 'compare_months', label: 'Comparar meses' },
       { id: 'plan_investment', label: 'Planear una inversion' },
+      { id: 'view_history', label: 'Ver historial de gastos' },
     ],
   },
 })
@@ -179,6 +180,26 @@ function adaptKnownLegacyEnvelope(
             { id: 'safe', title: textValue('sitio_recomendado_1', 'Alternativa de menor riesgo'), detail: textValue('rendimiento_sitio_1', 'Consulta la tasa vigente.'), estimatedAnnualGain: numberValue('ganancia_anual_sitio_1') },
             { id: 'growth', title: textValue('sitio_recomendado_2', 'Alternativa de mayor rendimiento'), detail: textValue('rendimiento_sitio_2', 'Consulta las condiciones vigentes.'), estimatedAnnualGain: numberValue('ganancia_anual_sitio_2') },
           ],
+        },
+      }, capabilityBlock(turnId)],
+      suggested_next_actions: [],
+    }
+  }
+
+  if (envelope.componente === 'historial_chart') {
+    const rawSerie = Array.isArray(props.serie) ? props.serie : []
+    return {
+      version: '1.0', conversation_turn_id: turnId, intent: 'view_history', message: envelope.texto_respuesta,
+      blocks: [{
+        block_id: `${turnId}_history`, component: 'historial_chart', props: {
+          title: textValue('titulo', 'Historial de gastos'),
+          serie: rawSerie.map((item: unknown) => {
+            const row = item as Record<string, unknown>
+            return {
+              mes: typeof row.mes === 'string' ? row.mes : 'Periodo',
+              gasto: typeof row.gasto === 'number' && Number.isFinite(row.gasto) ? row.gasto : 0,
+            }
+          }),
         },
       }, capabilityBlock(turnId)],
       suggested_next_actions: [],

@@ -6,7 +6,7 @@ import os
 import re
 import time
 import warnings
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Literal, Optional
 
 from fastapi import FastAPI, HTTPException
@@ -63,10 +63,11 @@ def autenticar_usuario(matricula: str, nombre: str) -> Optional[str]:
 class ParametrosIA(BaseModel):
     mes_inicio: Optional[str] = Field(default=None, description="Mes inicial (YYYY-MM).")
     mes_fin: Optional[str] = Field(default=None, description="Mes final (YYYY-MM).")
+    anios: Optional[int] = Field(default=None, description="Cantidad de años del historial solicitado.")
     monto_inversion: Optional[float] = Field(default=None, description="Monto explícito si el usuario lo menciona.")
 
 class ContratoA(BaseModel):
-    intencion: Literal["comparar_meses", "ver_resumen", "crear_plan_inversion", "no_reconocida"]
+    intencion: Literal["comparar_meses", "ver_resumen", "ver_historial", "crear_plan_inversion", "no_reconocida"]
     usuario_id: str
     parametros: ParametrosIA
     confianza: Literal["alta", "media", "baja"]
@@ -97,7 +98,7 @@ class PropsUI(BaseModel):
 
 class ContratoC(BaseModel):
     texto_respuesta: str = Field(description="Mensaje amigable explicando la recomendación.")
-    componente: Literal["grafica_comparativa", "tarjeta_resumen", "tabla_categorias", "simulador_inversion", "ninguno"]
+    componente: Literal["grafica_comparativa", "historial_chart", "tarjeta_resumen", "tabla_categorias", "simulador_inversion", "ninguno"]
     props: PropsUI
 
 class MensajeRequest(BaseModel):
@@ -109,6 +110,10 @@ class AccionUIRequest(BaseModel):
     accion: str
     usuario_id: str
     contexto: dict = Field(default_factory=dict)
+
+class AgentTurnRequest(BaseModel):
+    usuario_id: str
+    event: dict = Field(default_factory=dict)
 
 
 MESES_ES = {
@@ -216,7 +221,8 @@ def interpretar(texto_usuario: str, usuario_id: str) -> dict:
     1. 'crear_plan_inversion': Si el usuario habla de invertir, hacer crecer su dinero, buscar opciones o dónde poner a trabajar sus ahorros.
     2. 'comparar_meses': Si pide comparar periodos de gasto.
     3. 'ver_resumen': Si pregunta por saldo actual o gastos del mes.
-    4. 'no_reconocida': Frases incoherentes.
+    4. 'ver_historial': Si pide el historial, evolución o tendencia de gastos durante varios meses o años.
+    5. 'no_reconocida': Frases incoherentes.
 
     REGLAS:
     - Asigna SIEMPRE el 'usuario_id' ({usuario_id}).
@@ -228,6 +234,11 @@ def interpretar(texto_usuario: str, usuario_id: str) -> dict:
             mes ocurrió. Si dice "diciembre" y la fecha actual es septiembre de 2026,
             devuelve "2025-12". Nunca devuelvas "diciembre", "Dic" ni otro nombre de mes.
         - Si no se menciona un periodo, deja mes_inicio y mes_fin como null.
+                - Para frases como "últimos N años", calcula mes_inicio como N años atrás del mes actual
+                    y mes_fin como el mes actual. Para "desde 2022", usa enero de 2022 como mes_inicio
+                    y el mes actual como mes_fin. En ambos casos usa la intención 'ver_historial'.
+                - Frases como "compara 2022 contra 2024" deben usar 'ver_historial' y cubrir desde
+                    2022-01 hasta 2024-12, no reducir la consulta a dos meses.
     """
 
     response = llamada_segura_gemini(
@@ -253,12 +264,26 @@ def consultar_patricio(contrato_a: dict) -> dict:
     mes_inicio = normalizar_mes(params.get("mes_inicio"))
     mes_fin = normalizar_mes(params.get("mes_fin"))
 
+    if intencion == "ver_historial" and not mes_inicio and not mes_fin and params.get("anios"):
+        try:
+            cantidad_anios = int(params["anios"])
+            ahora = datetime.now()
+            mes_fin = ahora.strftime("%Y-%m")
+            indice_mes_inicio = ahora.year * 12 + ahora.month - 1 - cantidad_anios * 12
+            mes_inicio = f"{indice_mes_inicio // 12:04d}-{indice_mes_inicio % 12 + 1:02d}"
+        except (TypeError, ValueError):
+            mes_inicio = None
+
     if intencion == "crear_plan_inversion":
         return ejecutar_herramienta("analizar_inversion", usuario_id, params)
 
     elif intencion == "comparar_meses":
         mcp_params = {"mes_inicio": mes_inicio, "mes_fin": mes_fin}
         return ejecutar_herramienta("comparar_meses", usuario_id, mcp_params)
+
+    elif intencion == "ver_historial":
+        mcp_params = {"mes_inicio": mes_inicio, "mes_fin": mes_fin}
+        return ejecutar_herramienta("historial_gastos", usuario_id, mcp_params)
 
     elif intencion == "ver_resumen":
         # Si el usuario pidió un rango de meses (ej. todo el año)
@@ -306,6 +331,29 @@ def generar_ui(contrato_a: dict, contrato_b: dict) -> dict:
                 "etiqueta_periodo_b": etiqueta_b,
                 "valor_periodo_b": float(resultado.get("valor_periodo_b") or 0),
                 "porcentaje_cambio": float(resultado.get("porcentaje_cambio") or 0),
+            },
+        }
+
+    if intencion == "ver_historial":
+        historial = resultado.get("historial_completo") or []
+        if not historial:
+            return {
+                "texto_respuesta": "No hay datos para ese periodo.",
+                "componente": "ninguno",
+                "props": {},
+            }
+        return {
+            "texto_respuesta": (
+                f"Esta es la evolución de tus gastos entre {resultado.get('mes_inicio', historial[0].get('mes'))} "
+                f"y {resultado.get('mes_fin', historial[-1].get('mes'))}."
+            ),
+            "componente": "historial_chart",
+            "props": {
+                "titulo": "Historial de gastos",
+                "serie": [
+                    {"mes": item.get("mes", ""), "gasto": float(item.get("gasto") or 0)}
+                    for item in historial
+                ],
             },
         }
 
@@ -381,9 +429,37 @@ def mensaje_endpoint(payload: MensajeRequest) -> dict:
         raise HTTPException(status_code=500, detail=f"Error al procesar el mensaje: {exc}") from exc
 
 
+@app.post("/agent/turn")
+def agent_turn_endpoint(payload: AgentTurnRequest) -> dict:
+    if payload.event.get("type") != "app_opened":
+        raise HTTPException(status_code=400, detail="Evento inicial no soportado.")
+
+    mes_actual = datetime.now().strftime("%Y-%m")
+    mes_anterior = (datetime.now().replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+    contrato_a = {
+        "intencion": "comparar_meses",
+        "usuario_id": payload.usuario_id,
+        "parametros": {"mes_inicio": mes_anterior, "mes_fin": mes_actual},
+    }
+    contrato_b = consultar_patricio(contrato_a)
+    response = generar_ui(contrato_a, contrato_b)
+    response["texto_respuesta"] = "Este es tu panorama financiero reciente. Elige una accion para explorar tus datos."
+    return response
+
+
 @app.post("/interact")
 def interact_endpoint(payload: AccionUIRequest) -> dict:
     componente = payload.contexto.get("componente")
+
+    capability_text = {
+        "view_summary": "Dame mi resumen financiero",
+        "compare_months": "Compara mis gastos de los ultimos dos meses",
+        "plan_investment": "Quiero planear una inversion",
+        "view_history": "Dame mi historial aproximado de gastos de los ultimos 4 años",
+    }
+    if payload.accion in capability_text:
+        mensaje = MensajeRequest(texto=capability_text[payload.accion], usuario_id=payload.usuario_id)
+        return mensaje_endpoint(mensaje)
 
     if payload.accion == "ver_detalles" and componente == "grafica_comparativa":
         mes_inicio = payload.contexto.get("mes_inicio")
@@ -455,10 +531,10 @@ if __name__ == "__main__":
 
     usuario_id_activo = autenticar_usuario(matricula_input, nombre_input)
     if not usuario_id_activo:
-        print("\n❌ Acceso denegado.")
+        print("\n Acceso denegado.")
         exit()
 
-    print(f"\n✅ ¡Sesión iniciada! Usuario ID: {usuario_id_activo}")
+    print(f"\n ¡Sesión iniciada! Usuario ID: {usuario_id_activo}")
 
     while True:
         frase = input("\nEscribe una frase (o 'salir'): ").strip()
@@ -467,15 +543,15 @@ if __name__ == "__main__":
         if frase.lower() == 'salir':
             break
 
-        print("\n⏳ [1/3] Interpretando intención...")
+        print("\n [1/3] Interpretando intención...")
         resultado_a = interpretar(texto_usuario=frase, usuario_id=usuario_id_activo)
         print(json.dumps(resultado_a, indent=2, ensure_ascii=False))
 
-        print("\n⏳ [2/3] Consultando BD y calculando excedente...")
+        print("\n [2/3] Consultando BD y calculando excedente...")
         resultado_b = consultar_patricio(resultado_a)
         print(json.dumps(resultado_b, indent=2, ensure_ascii=False))
 
-        print("\n⏳ [3/3] Generando UI...")
+        print("\n [3/3] Generando UI...")
         resultado_c = generar_ui(contrato_a=resultado_a, contrato_b=resultado_b)
         print(json.dumps(resultado_c, indent=2, ensure_ascii=False))
 

@@ -16,6 +16,11 @@ export const spendComparisonPropsSchema = z.object({
   variationPct: z.number().optional(),
 })
 
+export const historyChartPropsSchema = z.object({
+  title: z.string().optional(),
+  serie: z.array(z.object({ mes: z.string(), gasto: numberOrZero })).min(1),
+})
+
 export const summaryCardPropsSchema = z.object({
   balance: numberOrZero,
   monthlyLimit: numberOrZero,
@@ -47,6 +52,7 @@ export const textBlockPropsSchema = z.object({
 
 const blockSchema = z.discriminatedUnion('component', [
   z.object({ block_id: z.string(), component: z.literal('spend_comparison_chart'), props: spendComparisonPropsSchema }),
+  z.object({ block_id: z.string(), component: z.literal('historial_chart'), props: historyChartPropsSchema }),
   z.object({ block_id: z.string(), component: z.literal('summary_card'), props: summaryCardPropsSchema }),
   z.object({ block_id: z.string(), component: z.literal('investment_simulator'), props: investmentSimulatorPropsSchema }),
   z.object({ block_id: z.string(), component: z.literal('clarify_chips'), props: clarifyChipsPropsSchema }),

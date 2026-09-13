@@ -34,6 +34,7 @@ const homeMessage: A2UIMessage = {
           { id: 'view_summary', label: 'Ver mi resumen' },
           { id: 'compare_months', label: 'Comparar meses' },
           { id: 'plan_investment', label: 'Planear una inversion' },
+          { id: 'view_history', label: 'Ver historial de gastos' },
         ],
       },
     },

@@ -10,11 +10,13 @@ from core.contract import (
 from .comparar_meses import ejecutar as ejecutar_comparar_meses
 from .resumen_categoria import ejecutar as ejecutar_resumen_categoria
 from .analizar_inversion import ejecutar as ejecutar_analizar_inversion
+from .historial_gastos import ejecutar as ejecutar_historial_gastos
 
 REGISTRY: dict[str, Callable[[str, dict], dict]] = {
     "comparar_meses": ejecutar_comparar_meses,
     "resumen_categoria": ejecutar_resumen_categoria,
     "analizar_inversion": ejecutar_analizar_inversion,
+    "historial_gastos": ejecutar_historial_gastos,
 }
 
 def ejecutar_herramienta(nombre_herramienta: str, usuario_id: str, parametros: dict | None) -> dict:
