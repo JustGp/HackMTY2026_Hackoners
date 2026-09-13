@@ -12,16 +12,12 @@ export const tarjetaResumenSchema = z.object({
 })
 
 export const graficaComparativaSchema = z.object({
-  titulo: z.string(),
-  categorias: z.array(z.string()),
-  serie_a: z.object({
-    etiqueta: z.string(),
-    valores: z.array(z.number()),
-  }),
-  serie_b: z.object({
-    etiqueta: z.string(),
-    valores: z.array(z.number()),
-  }),
+  titulo: z.string().optional(),
+  etiqueta_periodo_a: z.string().optional(),
+  valor_periodo_a: z.number().optional(),
+  etiqueta_periodo_b: z.string().optional(),
+  valor_periodo_b: z.number().optional(),
+  porcentaje_cambio: z.number().optional(),
 })
 
 export const tablaCategoriasSchema = z.object({

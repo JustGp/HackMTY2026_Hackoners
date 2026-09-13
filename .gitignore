@@ -1,3 +1,6 @@
 server_cmp/.env
 __pycache__/
 *.pyc
+
+frontend-a2ui/.env
+

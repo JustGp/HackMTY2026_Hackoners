@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { dispatchA2UIAction, configureDispatcher } from './actionDispatcher'
 import { initialMockEnvelope, fetchMockEnvelope } from './mockBackend'
 import { sendToRealBackend } from './lib/realBackend'
@@ -7,16 +7,22 @@ import type { AccionUI, ComponentEnvelope } from './a2ui'
 
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 const sendEnvelope = useMock ? fetchMockEnvelope : sendToRealBackend
+const usuarioId = import.meta.env.VITE_USER_ID ?? 'demo-user'
 
 configureDispatcher(sendEnvelope)
 
 export default function App() {
   const [envelope, setEnvelope] = useState<ComponentEnvelope>(initialMockEnvelope)
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+  const lastAction = useRef<AccionUI | null>(null)
 
   const loadInitialEnvelope = () => {
     setStatus('loading')
-    fetchMockEnvelope()
+    const request = lastAction.current
+      ? dispatchA2UIAction(lastAction.current)
+      : fetchMockEnvelope()
+
+    request
       .then((next) => {
         setEnvelope(next)
         setStatus('idle')
@@ -25,6 +31,7 @@ export default function App() {
   }
 
   const handleAction = async (accionUI: AccionUI) => {
+    lastAction.current = accionUI
     setStatus('loading')
     try {
       setEnvelope(await dispatchA2UIAction(accionUI))
@@ -58,7 +65,7 @@ export default function App() {
         {status !== 'error' && (
           <A2UIRenderer
             envelope={envelope}
-            usuarioId="demo-user"
+            usuarioId={usuarioId}
             onAction={handleAction}
           />
         )}

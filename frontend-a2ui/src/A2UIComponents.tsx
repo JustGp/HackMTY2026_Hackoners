@@ -24,7 +24,8 @@ export function TarjetaResumen({
   limite_mensual_tarjeta,
   gasto_mes_actual,
   porcentaje_usado,
-}: TarjetaResumenProps) {
+  onAction,
+}: TarjetaResumenProps & { onAction?: OnAction }) {
   const pct = Math.min(100, Math.max(0, porcentaje_usado))
 
   return (
@@ -42,6 +43,13 @@ export function TarjetaResumen({
         {pct}% del límite usado (${gasto_mes_actual.toLocaleString()} de $
         {limite_mensual_tarjeta.toLocaleString()})
       </p>
+      <button
+        type="button"
+        onClick={() => onAction?.('ver_detalles', { componente: 'tarjeta_resumen' })}
+        className="mt-2 rounded-lg bg-neutral-100 px-3 py-2 text-sm font-medium hover:bg-neutral-200"
+      >
+        Ver desglose
+      </button>
     </div>
   )
 }
@@ -51,49 +59,35 @@ export function TarjetaResumen({
 // ---------------------------------------------------------------------------
 export function GraficaComparativa({
   titulo,
-  categorias,
-  serie_a,
-  serie_b,
-  onAction,
+  etiqueta_periodo_a,
+  valor_periodo_a,
+  etiqueta_periodo_b,
+  valor_periodo_b,
+  porcentaje_cambio,
 }: GraficaComparativaProps & { onAction?: OnAction }) {
-  const data = categorias.map((categoria, i) => ({
-    categoria,
-    [serie_a.etiqueta]: serie_a.valores[i] ?? 0,
-    [serie_b.etiqueta]: serie_b.valores[i] ?? 0,
-  }))
+  const data = [
+    { periodo: etiqueta_periodo_a ?? 'Periodo A', gasto: valor_periodo_a ?? 0 },
+    { periodo: etiqueta_periodo_b ?? 'Periodo B', gasto: valor_periodo_b ?? 0 },
+  ]
 
   return (
     <div className="rounded-xl border border-neutral-200 p-4 shadow-sm">
-      <p className="mb-2 text-sm font-medium">{titulo}</p>
+      <p className="mb-2 text-sm font-medium">{titulo ?? 'Comparativa de gastos'}</p>
       <ResponsiveContainer width="100%" height={260}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="categoria" />
+          <XAxis dataKey="periodo" />
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar
-            dataKey={serie_a.etiqueta}
-            fill="#93c5fd"
-            onClick={(_, index) =>
-              onAction?.('ver_detalle_categoria', {
-                categoria: categorias[index],
-                serie: serie_a.etiqueta,
-              })
-            }
-          />
-          <Bar
-            dataKey={serie_b.etiqueta}
-            fill="#3b82f6"
-            onClick={(_, index) =>
-              onAction?.('ver_detalle_categoria', {
-                categoria: categorias[index],
-                serie: serie_b.etiqueta,
-              })
-            }
-          />
+          <Bar dataKey="gasto" fill="#3b82f6" />
         </BarChart>
       </ResponsiveContainer>
+      {porcentaje_cambio !== undefined && (
+        <p className="text-center text-sm font-medium">
+          Variación: {porcentaje_cambio}%
+        </p>
+      )}
     </div>
   )
 }

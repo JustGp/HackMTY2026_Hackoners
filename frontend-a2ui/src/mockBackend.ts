@@ -7,9 +7,11 @@ const FIXTURES: Record<string, ComponentEnvelope> = {
     componente: 'grafica_comparativa',
     props: {
       titulo: 'Diciembre vs Enero',
-      categorias: ['comida', 'transporte', 'entretenimiento', 'otros'],
-      serie_a: { etiqueta: 'Diciembre', valores: [3400, 1300, 3000, 2100] },
-      serie_b: { etiqueta: 'Enero', valores: [3100, 1200, 1900, 2000] },
+      etiqueta_periodo_a: 'Diciembre',
+      valor_periodo_a: 9800,
+      etiqueta_periodo_b: 'Enero',
+      valor_periodo_b: 8200,
+      porcentaje_cambio: -16.33,
     },
   },
   resumen: {

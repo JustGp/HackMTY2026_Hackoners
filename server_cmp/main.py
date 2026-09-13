@@ -2,6 +2,7 @@
 # [TAG 1: IMPORTACIONES Y LIBRERÍAS]
 # ==============================================================================
 import json
+from pathlib import Path
 import warnings
 from datetime import datetime
 from typing import Literal, Optional
@@ -9,6 +10,9 @@ from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
 import os
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).with_name(".env"))
 
 # Importamos la conexión a BD y el ejecutor de herramientas de Patricio
 from core.db import get_supabase_client
@@ -91,7 +95,7 @@ class PropsUI(BaseModel):
 
 class ContratoC(BaseModel):
     texto_respuesta: str = Field(description="Mensaje amigable, empático y tipo TikTok explicando los datos. Máximo 2 oraciones.")
-    componente: Literal["grafica_comparativa", "tarjeta_resumen", "ninguno"]
+    componente: Literal["grafica_comparativa", "tarjeta_resumen"]
     props: PropsUI = Field(description="Estructura con los datos exactos para renderizar el componente en la UI.")
 
 
@@ -99,7 +103,12 @@ class ContratoC(BaseModel):
 # [TAG 5: CONEXIÓN CON LA API DE GEMINI]
 # ==============================================================================
 API_KEY = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=API_KEY)
+
+
+def get_genai_client() -> genai.Client:
+    if not API_KEY:
+        raise RuntimeError("GEMINI_API_KEY is not configured")
+    return genai.Client(api_key=API_KEY)
 
 
 # ==============================================================================
@@ -131,7 +140,7 @@ def interpretar(texto_usuario: str, usuario_id: str) -> dict:
     - Si pide comparar dos meses específicos, asigna el más antiguo a mes_inicio y el más reciente a mes_fin.
     """
 
-    response = client.models.generate_content(
+    response = get_genai_client().models.generate_content(
         model='gemini-3.1-flash-lite',
         contents=texto_usuario,
         config=types.GenerateContentConfig(
@@ -203,7 +212,7 @@ def generar_ui(contrato_a: dict, contrato_b: dict) -> dict:
        - 'porcentaje_usado': Cópialo de 'porcentaje_usado' del resultado.
     """
     
-    response = client.models.generate_content(
+    response = get_genai_client().models.generate_content(
         model='gemini-3.1-flash-lite',
         contents="Formatea estos datos para la UI basándote en las instrucciones.",
         config=types.GenerateContentConfig(
