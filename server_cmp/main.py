@@ -115,6 +115,18 @@ class AgentTurnRequest(BaseModel):
     usuario_id: str
     event: dict = Field(default_factory=dict)
 
+class LoginRequest(BaseModel):
+    matricula: str
+    nombre: str
+
+
+@app.post("/login")
+def login_endpoint(payload: LoginRequest) -> dict:
+    usuario_id = autenticar_usuario(payload.matricula, payload.nombre)
+    if not usuario_id:
+        raise HTTPException(status_code=401, detail="Matrícula o nombre incorrectos.")
+    return {"usuario_id": usuario_id}
+
 
 MESES_ES = {
     "enero": 1,

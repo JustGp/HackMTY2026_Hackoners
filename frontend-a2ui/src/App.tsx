@@ -6,7 +6,6 @@ import type { A2UIAction, A2UIMessage } from './a2ui/contract'
 import { sendAppOpened, sendEvent, sendText } from './lib/realBackend'
 
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
-const usuarioId = import.meta.env.VITE_USER_ID ?? 'demo-user'
 
 const homeMessage: A2UIMessage = {
   version: '1.0',
@@ -42,7 +41,7 @@ const homeMessage: A2UIMessage = {
   suggested_next_actions: [],
 }
 
-export default function App() {
+export default function App({ usuarioId }: { usuarioId: string }) {
   const [feed, setFeed] = useState<A2UIMessage[]>([homeMessage])
   const [draft, setDraft] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
@@ -99,7 +98,20 @@ export default function App() {
               <h1 className="text-xl font-semibold">Tu centro financiero</h1>
             </div>
           </div>
-          <span className="hidden rounded-full bg-white px-3 py-1 text-xs font-medium text-brand-gray shadow-sm sm:inline-flex">Cuenta conectada</span>
+          <div className="flex items-center gap-2">
+            <span className="hidden rounded-full bg-white px-3 py-1 text-xs font-medium text-brand-gray shadow-sm sm:inline-flex">Cuenta conectada</span>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-brand-gray shadow-sm">{usuarioId}</span>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem('usuario_id')
+                window.location.reload()
+              }}
+              className="rounded-full bg-white px-3 py-1 text-xs font-medium text-brand-gray shadow-sm hover:text-brand-red"
+            >
+              Cerrar sesión
+            </button>
+          </div>
         </header>
 
         <section className="flex-1 py-7">
