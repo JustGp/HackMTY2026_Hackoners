@@ -40,6 +40,12 @@ export const tablaCategoriasSchema = z.object({
   ),
 })
 
+export const simuladorInversionSchema = z.object({
+  saldo_actual: numberOrZero,
+  gasto_ultimo_mes: numberOrZero,
+  monto_sugerido_inversion: numberOrZero,
+})
+
 // Discriminated union on "componente" — Zod validates against the right
 // branch and TypeScript narrows `props` once you check `componente`.
 export const componentEnvelopeSchema = z.discriminatedUnion('componente', [
@@ -57,6 +63,11 @@ export const componentEnvelopeSchema = z.discriminatedUnion('componente', [
     texto_respuesta: z.string(),
     componente: z.literal('tabla_categorias'),
     props: tablaCategoriasSchema,
+  }),
+  z.object({
+    texto_respuesta: z.string(),
+    componente: z.literal('simulador_inversion'),
+    props: simuladorInversionSchema,
   }),
   z.object({
     texto_respuesta: z.string(),
@@ -78,6 +89,7 @@ export const accionUISchema = z.object({
 export type TarjetaResumenProps = z.infer<typeof tarjetaResumenSchema>
 export type GraficaComparativaProps = z.infer<typeof graficaComparativaSchema>
 export type TablaCategoriasProps = z.infer<typeof tablaCategoriasSchema>
+export type SimuladorInversionProps = z.infer<typeof simuladorInversionSchema>
 export type ComponentEnvelope = z.infer<typeof componentEnvelopeSchema>
 export type AccionUI = z.infer<typeof accionUISchema>
 

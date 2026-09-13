@@ -10,12 +10,32 @@ import {
 } from 'recharts'
 import type {
   GraficaComparativaProps,
+  SimuladorInversionProps,
   TablaCategoriasProps,
   TarjetaResumenProps,
 } from './a2ui'
 import { Card } from './ui/primitives'
 
 type OnAction = (accion: string, contexto: Record<string, unknown>) => void
+
+export function SimuladorInversion({
+  saldo_actual,
+  gasto_ultimo_mes,
+  monto_sugerido_inversion,
+}: SimuladorInversionProps) {
+  return (
+    <Card>
+      <p className="text-sm text-brand-gray">Plan de inversión sugerido</p>
+      <p className="mt-1 text-2xl font-semibold text-brand-gray-dark">
+        ${monto_sugerido_inversion.toLocaleString()}
+      </p>
+      <p className="mt-2 text-xs text-brand-gray">
+        Saldo: ${saldo_actual.toLocaleString()} · Gasto mensual de referencia: $
+        {gasto_ultimo_mes.toLocaleString()}
+      </p>
+    </Card>
+  )
+}
 
 // ---------------------------------------------------------------------------
 // tarjeta_resumen
@@ -48,7 +68,12 @@ export function TarjetaResumen({
       </p>
       <button
         type="button"
-        onClick={() => onAction?.('ver_detalles', { componente: 'tarjeta_resumen' })}
+        onClick={() =>
+          onAction?.('ver_detalles', {
+            componente: 'tarjeta_resumen',
+            mes: new Date().toISOString().slice(0, 7),
+          })
+        }
         className="mt-2 rounded-lg bg-brand-gray-light px-3 py-2 text-sm font-medium text-brand-gray hover:bg-[#e5e7eb]"
       >
         Ver desglose
@@ -77,7 +102,13 @@ export function GraficaComparativa({
   return (
     <Card
       className="cursor-pointer transition-colors hover:bg-brand-gray-light/50"
-      onClick={() => onAction?.('ver_detalles', { componente: 'grafica_comparativa' })}
+      onClick={() =>
+        onAction?.('ver_detalles', {
+          componente: 'grafica_comparativa',
+          mes_inicio: etiqueta_periodo_a,
+          mes_fin: etiqueta_periodo_b,
+        })
+      }
     >
       <p className="mb-2 text-sm font-medium text-brand-gray-dark">
         {titulo ?? 'Comparativa de gastos'}
@@ -86,7 +117,11 @@ export function GraficaComparativa({
         type="button"
         onClick={(event) => {
           event.stopPropagation()
-          onAction?.('ver_detalles', { componente: 'grafica_comparativa' })
+          onAction?.('ver_detalles', {
+            componente: 'grafica_comparativa',
+            mes_inicio: etiqueta_periodo_a,
+            mes_fin: etiqueta_periodo_b,
+          })
         }}
         className="absolute right-4 top-4 text-xs text-brand-gray hover:text-brand-gray-dark"
       >

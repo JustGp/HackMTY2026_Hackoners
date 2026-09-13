@@ -1,5 +1,10 @@
 import { Component, type ComponentType, type ReactNode } from 'react'
-import { GraficaComparativa, TablaCategorias, TarjetaResumen } from './A2UIComponents'
+import {
+  GraficaComparativa,
+  SimuladorInversion,
+  TablaCategorias,
+  TarjetaResumen,
+} from './A2UIComponents'
 import { parseComponentEnvelope } from './a2ui'
 import type { AccionUI } from './a2ui'
 
@@ -41,6 +46,7 @@ const COMPONENT_REGISTRY: Record<string, ComponentType<any>> = {
   tarjeta_resumen: TarjetaResumen,
   grafica_comparativa: GraficaComparativa,
   tabla_categorias: TablaCategorias,
+  simulador_inversion: SimuladorInversion,
 } as const
 
 export function A2UIRenderer({
