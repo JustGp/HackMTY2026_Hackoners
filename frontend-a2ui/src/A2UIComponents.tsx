@@ -13,6 +13,7 @@ import type {
   TablaCategoriasProps,
   TarjetaResumenProps,
 } from './a2ui'
+import { Card } from './ui/primitives'
 
 type OnAction = (accion: string, contexto: Record<string, unknown>) => void
 
@@ -29,28 +30,30 @@ export function TarjetaResumen({
   const pct = Math.min(100, Math.max(0, porcentaje_usado))
 
   return (
-    <div className="rounded-xl border border-neutral-200 p-4 shadow-sm">
-      <p className="text-sm text-neutral-500">Saldo actual</p>
-      <p className="text-2xl font-semibold">${saldo_actual.toLocaleString()}</p>
+    <Card>
+      <p className="text-sm text-brand-gray">Saldo actual</p>
+      <p className="text-2xl font-semibold text-brand-gray-dark">
+        ${saldo_actual.toLocaleString()}
+      </p>
 
-      <div className="mt-3 h-2 w-full rounded-full bg-neutral-100">
+      <div className="mt-3 h-2 w-full rounded-full bg-brand-gray-light">
         <div
-          className="h-2 rounded-full bg-blue-500"
+          className="h-2 rounded-full bg-brand-red"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className="mt-1 text-xs text-neutral-500">
+      <p className="mt-1 text-xs text-brand-gray">
         {pct}% del límite usado (${gasto_mes_actual.toLocaleString()} de $
         {limite_mensual_tarjeta.toLocaleString()})
       </p>
       <button
         type="button"
         onClick={() => onAction?.('ver_detalles', { componente: 'tarjeta_resumen' })}
-        className="mt-2 rounded-lg bg-neutral-100 px-3 py-2 text-sm font-medium hover:bg-neutral-200"
+        className="mt-2 rounded-lg bg-brand-gray-light px-3 py-2 text-sm font-medium text-brand-gray hover:bg-[#e5e7eb]"
       >
         Ver desglose
       </button>
-    </div>
+    </Card>
   )
 }
 
@@ -72,12 +75,20 @@ export function GraficaComparativa({
   ]
 
   return (
-    <div className="rounded-xl border border-neutral-200 p-4 shadow-sm">
-      <p className="mb-2 text-sm font-medium">{titulo ?? 'Comparativa de gastos'}</p>
+    <Card
+      className="cursor-pointer transition-colors hover:bg-brand-gray-light/50"
+      onClick={() => onAction?.('ver_detalles', { componente: 'grafica_comparativa' })}
+    >
+      <p className="mb-2 text-sm font-medium text-brand-gray-dark">
+        {titulo ?? 'Comparativa de gastos'}
+      </p>
       <button
         type="button"
-        onClick={() => onAction?.('ver_detalles', { componente: 'grafica_comparativa' })}
-        className="absolute right-4 top-4 text-xs text-neutral-500 hover:text-neutral-700"
+        onClick={(event) => {
+          event.stopPropagation()
+          onAction?.('ver_detalles', { componente: 'grafica_comparativa' })
+        }}
+        className="absolute right-4 top-4 text-xs text-brand-gray hover:text-brand-gray-dark"
       >
         Ver más
       </button>
@@ -88,15 +99,15 @@ export function GraficaComparativa({
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="gasto" fill="#3b82f6" />
+          <Bar dataKey="gasto" fill="#d61f26" />
         </BarChart>
       </ResponsiveContainer>
       {porcentaje_cambio !== undefined && (
-        <p className="text-center text-sm font-medium">
+        <p className="text-center text-sm font-medium text-brand-gray-dark">
           Variación: {porcentaje_cambio}%
         </p>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -109,14 +120,16 @@ export function TablaCategorias({
   onAction,
 }: TablaCategoriasProps & { onAction?: OnAction }) {
   return (
-    <div className="rounded-xl border border-neutral-200 p-4 shadow-sm">
-      <p className="mb-2 text-sm font-medium">Categorías — {mes}</p>
+    <Card>
+      <p className="mb-2 text-sm font-medium text-brand-gray-dark">
+        Categorías — {mes}
+      </p>
       <table className="w-full text-sm">
         <tbody>
           {categorias.map((cat) => (
             <tr
               key={cat.nombre}
-              className="cursor-pointer border-t border-neutral-100 hover:bg-neutral-50"
+              className="cursor-pointer border-t border-brand-gray-light hover:bg-brand-gray-light"
               onClick={() =>
                 onAction?.('ver_detalle_categoria', {
                   categoria: cat.nombre,
@@ -124,14 +137,14 @@ export function TablaCategorias({
                 })
               }
             >
-              <td className="py-2">{cat.nombre}</td>
-              <td className="py-2 text-right font-medium">
+              <td className="py-2 text-brand-gray-dark">{cat.nombre}</td>
+              <td className="py-2 text-right font-medium text-brand-gray-dark">
                 ${cat.monto.toLocaleString()}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+    </Card>
   )
 }

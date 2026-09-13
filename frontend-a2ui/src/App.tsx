@@ -58,14 +58,24 @@ export default function App() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50 p-6 text-neutral-900">
+    <main className="min-h-screen bg-brand-gray-light p-6 text-brand-gray-dark">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-lg flex-col">
-        <h1 className="mb-6 text-2xl font-semibold">Tu asistente financiero</h1>
-        <section className="flex-1 space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+        <header className="mb-6 flex items-center gap-3">
+          <img src="/banorte-logo.svg" alt="Banorte" className="h-9 w-auto" />
+          <h1 className="text-2xl font-semibold text-brand-gray-dark">
+            Tu asistente financiero
+          </h1>
+        </header>
+
+        <section className="flex-1 space-y-4 rounded-xl border border-brand-gray-light bg-white p-4 shadow-sm">
           {messages.map((message, index) => (
             <div
               key={`${message.role}-${index}`}
-              className={message.role === 'user' ? 'ml-8 rounded-xl bg-blue-600 p-3 text-sm text-white' : 'mr-8'}
+              className={
+                message.role === 'user'
+                  ? 'ml-8 rounded-xl bg-brand-red p-3 text-sm text-white'
+                  : 'mr-8'
+              }
             >
               {message.role === 'user' ? (
                 message.text
@@ -79,7 +89,7 @@ export default function App() {
             </div>
           ))}
           {status === 'loading' && (
-            <p className="mr-8 rounded-xl bg-neutral-100 p-3 text-sm text-neutral-500">
+            <p className="mr-8 rounded-xl bg-brand-gray-light p-3 text-sm text-brand-gray">
               Pensando...
             </p>
           )}
@@ -89,17 +99,18 @@ export default function App() {
             </p>
           )}
         </section>
+
         <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
           <input
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder="Pregunta sobre tus gastos..."
-            className="min-w-0 flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+            className="min-w-0 flex-1 rounded-lg border border-brand-gray-light bg-white px-3 py-2 text-sm outline-none focus:border-brand-red"
           />
           <button
             type="submit"
             disabled={!draft.trim() || status === 'loading'}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-brand-red px-4 py-2 text-sm font-medium text-white hover:bg-[#b51a21] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Enviar
           </button>
