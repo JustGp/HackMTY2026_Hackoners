@@ -3,6 +3,7 @@
 # ==============================================================================
 import json
 import os
+import re
 import time
 import warnings
 from datetime import datetime
@@ -107,6 +108,70 @@ class AccionUIRequest(BaseModel):
     usuario_id: str
     contexto: dict = Field(default_factory=dict)
 
+
+MESES_ES = {
+    "enero": 1,
+    "ene": 1,
+    "febrero": 2,
+    "feb": 2,
+    "marzo": 3,
+    "mar": 3,
+    "abril": 4,
+    "abr": 4,
+    "mayo": 5,
+    "may": 5,
+    "junio": 6,
+    "jun": 6,
+    "julio": 7,
+    "jul": 7,
+    "agosto": 8,
+    "ago": 8,
+    "septiembre": 9,
+    "setiembre": 9,
+    "sep": 9,
+    "set": 9,
+    "octubre": 10,
+    "oct": 10,
+    "noviembre": 11,
+    "nov": 11,
+    "diciembre": 12,
+    "dic": 12,
+}
+
+
+def normalizar_mes(valor: object, referencia: Optional[datetime] = None) -> Optional[str]:
+    """Convert a month label into the YYYY-MM format required by Supabase tools."""
+    if not isinstance(valor, str):
+        return None
+
+    texto = valor.strip().lower()
+    if not texto:
+        return None
+
+    if re.fullmatch(r"\d{4}-\d{2}", texto):
+        try:
+            datetime.strptime(texto, "%Y-%m")
+        except ValueError:
+            return None
+        return texto
+
+    coincidencia = re.fullmatch(
+        r"([a-záéíóúñ]+)(?:\s+de)?(?:\s+(\d{4}))?", texto
+    )
+    if not coincidencia:
+        return None
+
+    mes = MESES_ES.get(coincidencia.group(1))
+    if mes is None:
+        return None
+
+    ahora = referencia or datetime.now()
+    anio = int(coincidencia.group(2)) if coincidencia.group(2) else ahora.year
+    if coincidencia.group(2) is None and mes > ahora.month:
+        anio -= 1
+
+    return f"{anio:04d}-{mes:02d}"
+
 # ==============================================================================
 # [TAG 5: CONEXIÓN CON LA API DE GEMINI Y WRAPPER DE REINTENTO]
 # ==============================================================================
@@ -153,6 +218,14 @@ def interpretar(texto_usuario: str, usuario_id: str) -> dict:
 
     REGLAS:
     - Asigna SIEMPRE el 'usuario_id' ({usuario_id}).
+        - mes_inicio y mes_fin deben ser SIEMPRE cadenas con formato exacto YYYY-MM.
+        - Convierte nombres de meses al formato YYYY-MM: enero=01, febrero=02, marzo=03,
+            abril=04, mayo=05, junio=06, julio=07, agosto=08, septiembre=09,
+            octubre=10, noviembre=11 y diciembre=12.
+        - Si el usuario dice solo un mes sin año, usa el año más reciente en el que ese
+            mes ocurrió. Si dice "diciembre" y la fecha actual es septiembre de 2026,
+            devuelve "2025-12". Nunca devuelvas "diciembre", "Dic" ni otro nombre de mes.
+        - Si no se menciona un periodo, deja mes_inicio y mes_fin como null.
     """
 
     response = llamada_segura_gemini(
@@ -175,17 +248,17 @@ def consultar_patricio(contrato_a: dict) -> dict:
     usuario_id = contrato_a.get("usuario_id")
     params = contrato_a.get("parametros", {})
 
+    mes_inicio = normalizar_mes(params.get("mes_inicio"))
+    mes_fin = normalizar_mes(params.get("mes_fin"))
+
     if intencion == "crear_plan_inversion":
         return ejecutar_herramienta("analizar_inversion", usuario_id, params)
 
     elif intencion == "comparar_meses":
-        mcp_params = {"mes_inicio": params.get("mes_inicio"), "mes_fin": params.get("mes_fin")}
+        mcp_params = {"mes_inicio": mes_inicio, "mes_fin": mes_fin}
         return ejecutar_herramienta("comparar_meses", usuario_id, mcp_params)
 
     elif intencion == "ver_resumen":
-        mes_inicio = params.get("mes_inicio")
-        mes_fin = params.get("mes_fin")
-        
         # Si el usuario pidió un rango de meses (ej. todo el año)
         if mes_inicio and mes_fin and mes_inicio != mes_fin:
             return ejecutar_herramienta("comparar_meses", usuario_id, {
