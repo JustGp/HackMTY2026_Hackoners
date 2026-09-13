@@ -5,6 +5,15 @@ def ejecutar(usuario_id: str, parametros: dict) -> dict:
     if not usuario_id:
         raise ParametroFaltanteError("El campo 'usuario_id' es obligatorio")
 
+    monto_solicitado = parametros.get("monto_inversion")
+    if monto_solicitado is not None:
+        try:
+            monto_solicitado = float(monto_solicitado)
+        except (TypeError, ValueError) as exc:
+            raise ParametroFaltanteError("'monto_inversion' debe ser un número") from exc
+        if monto_solicitado <= 0:
+            raise ParametroFaltanteError("'monto_inversion' debe ser mayor que cero")
+
     client = get_supabase_client()
     try:
         # 1. Obtener saldo actual de la cuenta
@@ -22,10 +31,22 @@ def ejecutar(usuario_id: str, parametros: dict) -> dict:
     fondo_emergencia = gasto_ultimo_mes * 1.5
     monto_sugerido = saldo_actual - fondo_emergencia
     monto_sugerido = monto_sugerido if monto_sugerido > 0 else (saldo_actual * 0.1)
+    if monto_solicitado is not None:
+        monto_sugerido = monto_solicitado
+
+    rendimiento_seguro = 0.09
+    rendimiento_alto = 0.12
 
     return {
         "usuario_id": usuario_id,
         "saldo_actual": saldo_actual,
         "gasto_ultimo_mes": gasto_ultimo_mes,
-        "monto_sugerido_inversion": round(monto_sugerido, 2)
+        "monto_sugerido_inversion": round(monto_sugerido, 2),
+        "monto_solicitado": monto_solicitado,
+        "sitio_recomendado_1": "Inversión Segura con el Gobierno (Cetes)",
+        "rendimiento_sitio_1": "9% anual de referencia; verifica la tasa vigente",
+        "ganancia_anual_sitio_1": round(monto_sugerido * rendimiento_seguro, 2),
+        "sitio_recomendado_2": "Cuenta Digital de Alto Rendimiento (como Nu o Klar)",
+        "rendimiento_sitio_2": "12% anual de referencia; verifica condiciones y protección vigente",
+        "ganancia_anual_sitio_2": round(monto_sugerido * rendimiento_alto, 2),
     }

@@ -22,7 +22,14 @@ export function SimuladorInversion({
   saldo_actual,
   gasto_ultimo_mes,
   monto_sugerido_inversion,
-}: SimuladorInversionProps) {
+  sitio_recomendado_1,
+  rendimiento_sitio_1,
+  ganancia_anual_sitio_1,
+  sitio_recomendado_2,
+  rendimiento_sitio_2,
+  ganancia_anual_sitio_2,
+  onAction,
+}: SimuladorInversionProps & { onAction?: OnAction }) {
   return (
     <Card>
       <p className="text-sm text-brand-gray">Plan de inversión sugerido</p>
@@ -33,6 +40,46 @@ export function SimuladorInversion({
         Saldo: ${saldo_actual.toLocaleString()} · Gasto mensual de referencia: $
         {gasto_ultimo_mes.toLocaleString()}
       </p>
+      <div className="mt-4 grid gap-3">
+        <div className="rounded-lg border border-brand-gray-light p-3">
+          <p className="text-sm font-medium text-brand-gray-dark">
+            {sitio_recomendado_1 ?? 'Alternativa de menor riesgo'}
+          </p>
+          <p className="mt-1 text-xs text-brand-gray">
+            {rendimiento_sitio_1 ?? 'Consulta la tasa vigente antes de invertir.'}
+          </p>
+          <p className="mt-2 text-sm font-semibold text-brand-red">
+            Ganancia anual estimada: ${
+              (ganancia_anual_sitio_1 ?? 0).toLocaleString()
+            }
+          </p>
+        </div>
+        <div className="rounded-lg border border-brand-gray-light p-3">
+          <p className="text-sm font-medium text-brand-gray-dark">
+            {sitio_recomendado_2 ?? 'Alternativa de mayor rendimiento'}
+          </p>
+          <p className="mt-1 text-xs text-brand-gray">
+            {rendimiento_sitio_2 ?? 'Consulta la tasa y protección vigente.'}
+          </p>
+          <p className="mt-2 text-sm font-semibold text-brand-red">
+            Ganancia anual estimada: ${
+              (ganancia_anual_sitio_2 ?? 0).toLocaleString()
+            }
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() =>
+          onAction?.('ver_detalles', {
+            componente: 'simulador_inversion',
+            monto_inversion: monto_sugerido_inversion,
+          })
+        }
+        className="mt-4 rounded-lg bg-brand-red px-3 py-2 text-sm font-medium text-white hover:bg-[#b51a21]"
+      >
+        Actualizar simulación
+      </button>
     </Card>
   )
 }

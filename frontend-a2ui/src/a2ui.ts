@@ -44,6 +44,12 @@ export const simuladorInversionSchema = z.object({
   saldo_actual: numberOrZero,
   gasto_ultimo_mes: numberOrZero,
   monto_sugerido_inversion: numberOrZero,
+  sitio_recomendado_1: z.string().optional(),
+  rendimiento_sitio_1: z.string().optional(),
+  ganancia_anual_sitio_1: optionalNumber,
+  sitio_recomendado_2: z.string().optional(),
+  rendimiento_sitio_2: z.string().optional(),
+  ganancia_anual_sitio_2: optionalNumber,
 })
 
 // Discriminated union on "componente" — Zod validates against the right

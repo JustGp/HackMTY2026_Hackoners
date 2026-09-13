@@ -92,6 +92,8 @@ class PropsUI(BaseModel):
     rendimiento_sitio_1: Optional[str] = Field(default=None, description="Tasa o rendimiento estimado 1.")
     sitio_recomendado_2: Optional[str] = Field(default=None, description="Mejor plataforma o instrumento de mayor rendimiento.")
     rendimiento_sitio_2: Optional[str] = Field(default=None, description="Tasa o rendimiento estimado 2.")
+    ganancia_anual_sitio_1: Optional[float] = Field(default=None)
+    ganancia_anual_sitio_2: Optional[float] = Field(default=None)
 
 class ContratoC(BaseModel):
     texto_respuesta: str = Field(description="Mensaje amigable explicando la recomendación.")
@@ -326,15 +328,28 @@ def generar_ui(contrato_a: dict, contrato_b: dict) -> dict:
 
     if intencion == "crear_plan_inversion":
         monto = float(resultado.get("monto_sugerido_inversion") or 0)
+        monto_solicitado = resultado.get("monto_solicitado")
+        texto_monto = (
+            f"Tomé en cuenta tu monto de ${float(monto_solicitado):,.2f}."
+            if monto_solicitado is not None
+            else "Calculé el monto considerando un fondo de emergencia de 1.5 meses."
+        )
         return {
             "texto_respuesta": (
-                f"Con base en tu saldo y gastos, podrías destinar ${monto:,.2f} a una estrategia de inversión segura."
+                f"{texto_monto} Podrías destinar ${monto:,.2f}. "
+                "Compara una alternativa gubernamental de menor riesgo con otra digital de mayor rendimiento."
             ),
             "componente": "simulador_inversion",
             "props": {
                 "saldo_actual": float(resultado.get("saldo_actual") or 0),
                 "gasto_ultimo_mes": float(resultado.get("gasto_ultimo_mes") or 0),
                 "monto_sugerido_inversion": monto,
+                "sitio_recomendado_1": resultado.get("sitio_recomendado_1"),
+                "rendimiento_sitio_1": resultado.get("rendimiento_sitio_1"),
+                "ganancia_anual_sitio_1": float(resultado.get("ganancia_anual_sitio_1") or 0),
+                "sitio_recomendado_2": resultado.get("sitio_recomendado_2"),
+                "rendimiento_sitio_2": resultado.get("rendimiento_sitio_2"),
+                "ganancia_anual_sitio_2": float(resultado.get("ganancia_anual_sitio_2") or 0),
             },
         }
 
@@ -396,6 +411,17 @@ def interact_endpoint(payload: AccionUIRequest) -> dict:
             "intencion": "ver_resumen",
             "usuario_id": payload.usuario_id,
             "parametros": {"mes_inicio": mes, "mes_fin": mes},
+        }
+        contrato_b = consultar_patricio(contrato_a)
+        return generar_ui(contrato_a, contrato_b)
+
+    if payload.accion == "ver_detalles" and componente == "simulador_inversion":
+        monto = payload.contexto.get("monto_inversion")
+        parametros = {"monto_inversion": monto} if monto is not None else {}
+        contrato_a = {
+            "intencion": "crear_plan_inversion",
+            "usuario_id": payload.usuario_id,
+            "parametros": parametros,
         }
         contrato_b = consultar_patricio(contrato_a)
         return generar_ui(contrato_a, contrato_b)
