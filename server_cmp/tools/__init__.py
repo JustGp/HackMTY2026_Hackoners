@@ -5,12 +5,16 @@ from core.contract import (
     ParametroFaltanteError,
     DatabaseError,
 )
-# IMPORTACIÓN RELATIVA CORREGIDA
-from . import comparar_meses, resumen_categoria
+
+# Importamos directamente la función 'ejecutar' de cada archivo hijo
+from .comparar_meses import ejecutar as ejecutar_comparar_meses
+from .resumen_categoria import ejecutar as ejecutar_resumen_categoria
+from .analizar_inversion import ejecutar as ejecutar_analizar_inversion
 
 REGISTRY: dict[str, Callable[[str, dict], dict]] = {
-    "comparar_meses": comparar_meses.ejecutar,
-    "resumen_categoria": resumen_categoria.ejecutar,
+    "comparar_meses": ejecutar_comparar_meses,
+    "resumen_categoria": ejecutar_resumen_categoria,
+    "analizar_inversion": ejecutar_analizar_inversion,
 }
 
 def ejecutar_herramienta(nombre_herramienta: str, usuario_id: str, parametros: dict | None) -> dict:
