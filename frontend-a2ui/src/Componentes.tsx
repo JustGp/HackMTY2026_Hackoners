@@ -1,1 +1,0 @@
-export { GraficaComparativa, TablaCategorias, TarjetaResumen } from './A2UIComponents'

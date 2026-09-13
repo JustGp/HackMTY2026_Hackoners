@@ -64,6 +64,7 @@ export function GraficaComparativa({
   etiqueta_periodo_b,
   valor_periodo_b,
   porcentaje_cambio,
+  onAction,
 }: GraficaComparativaProps & { onAction?: OnAction }) {
   const data = [
     { periodo: etiqueta_periodo_a ?? 'Periodo A', gasto: valor_periodo_a ?? 0 },
@@ -73,6 +74,13 @@ export function GraficaComparativa({
   return (
     <div className="rounded-xl border border-neutral-200 p-4 shadow-sm">
       <p className="mb-2 text-sm font-medium">{titulo ?? 'Comparativa de gastos'}</p>
+      <button
+        type="button"
+        onClick={() => onAction?.('ver_detalles', { componente: 'grafica_comparativa' })}
+        className="absolute right-4 top-4 text-xs text-neutral-500 hover:text-neutral-700"
+      >
+        Ver más
+      </button>
       <ResponsiveContainer width="100%" height={260}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />

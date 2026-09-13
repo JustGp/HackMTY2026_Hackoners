@@ -95,7 +95,7 @@ class PropsUI(BaseModel):
 
 class ContratoC(BaseModel):
     texto_respuesta: str = Field(description="Mensaje amigable, empático y tipo TikTok explicando los datos. Máximo 2 oraciones.")
-    componente: Literal["grafica_comparativa", "tarjeta_resumen"]
+    componente: Literal["grafica_comparativa", "tarjeta_resumen", "tabla_categorias", "ninguno"]
     props: PropsUI = Field(description="Estructura con los datos exactos para renderizar el componente en la UI.")
 
 
@@ -140,8 +140,9 @@ def interpretar(texto_usuario: str, usuario_id: str) -> dict:
     - Si pide comparar dos meses específicos, asigna el más antiguo a mes_inicio y el más reciente a mes_fin.
     """
 
-    response = get_genai_client().models.generate_content(
-        model='gemini-3.1-flash-lite',
+    client = get_genai_client()
+    response = client.models.generate_content(
+        model='gemini-3.6-flash',
         contents=texto_usuario,
         config=types.GenerateContentConfig(
             system_instruction=system_instruction,
@@ -212,8 +213,9 @@ def generar_ui(contrato_a: dict, contrato_b: dict) -> dict:
        - 'porcentaje_usado': Cópialo de 'porcentaje_usado' del resultado.
     """
     
-    response = get_genai_client().models.generate_content(
-        model='gemini-3.1-flash-lite',
+    client = get_genai_client()
+    response = client.models.generate_content(
+        model='gemini-3.6-flash',
         contents="Formatea estos datos para la UI basándote en las instrucciones.",
         config=types.GenerateContentConfig(
             system_instruction=system_instruction,

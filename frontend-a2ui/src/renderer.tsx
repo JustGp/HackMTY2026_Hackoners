@@ -42,7 +42,7 @@ export function A2UIRenderer({
   return (
     <div className="space-y-3">
       <p className="text-sm text-neutral-700">{texto_respuesta}</p>
-      <Component {...props} onAction={handleAction} />
+      {componente !== 'ninguno' && Component && <Component {...props} onAction={handleAction} />}
     </div>
   )
 }

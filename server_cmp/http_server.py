@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from main import ContratoC, consultar_patricio, generar_ui
+from main import ContratoC, consultar_patricio, generar_ui, interpretar
 
 
 class AccionUIRequest(BaseModel):
@@ -14,6 +14,11 @@ class AccionUIRequest(BaseModel):
     accion: str = Field(min_length=1)
     usuario_id: str = Field(min_length=1)
     contexto: dict[str, Any] = Field(default_factory=dict)
+
+
+class MensajeTextoRequest(BaseModel):
+    texto: str = Field(min_length=1)
+    usuario_id: str = Field(min_length=1)
 
 
 app = FastAPI(title="AZUI Finance API")
@@ -50,5 +55,18 @@ def interact(payload: AccionUIRequest) -> ContratoC:
     try:
         contrato_b = consultar_patricio(contrato_a)
         return generar_ui(contrato_a, contrato_b)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.post("/mensaje", response_model=ContratoC)
+def mensaje(payload: MensajeTextoRequest) -> ContratoC:
+    try:
+        contrato_a = interpretar(
+            texto_usuario=payload.texto,
+            usuario_id=payload.usuario_id,
+        )
+        contrato_b = consultar_patricio(contrato_a)
+        return generar_ui(contrato_a=contrato_a, contrato_b=contrato_b)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

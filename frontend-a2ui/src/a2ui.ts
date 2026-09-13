@@ -1,23 +1,33 @@
 import { z } from 'zod'
 
+const numberOrZero = z.preprocess(
+  (value) => (value === null || value === undefined ? 0 : value),
+  z.number(),
+)
+
+const optionalNumber = z.preprocess(
+  (value) => (value === null ? undefined : value),
+  z.number().optional(),
+)
+
 // A2UI contract — v0.5 — locked
 // Unknown/extra fields on any object are ignored: z.object() strips
 // unrecognized keys by default, no extra config needed.
 
 export const tarjetaResumenSchema = z.object({
-  saldo_actual: z.number(),
-  limite_mensual_tarjeta: z.number(),
-  gasto_mes_actual: z.number(),
-  porcentaje_usado: z.number(),
+  saldo_actual: numberOrZero,
+  limite_mensual_tarjeta: numberOrZero,
+  gasto_mes_actual: numberOrZero,
+  porcentaje_usado: numberOrZero,
 })
 
 export const graficaComparativaSchema = z.object({
   titulo: z.string().optional(),
   etiqueta_periodo_a: z.string().optional(),
-  valor_periodo_a: z.number().optional(),
+  valor_periodo_a: optionalNumber,
   etiqueta_periodo_b: z.string().optional(),
-  valor_periodo_b: z.number().optional(),
-  porcentaje_cambio: z.number().optional(),
+  valor_periodo_b: optionalNumber,
+  porcentaje_cambio: optionalNumber,
 })
 
 export const tablaCategoriasSchema = z.object({
@@ -47,6 +57,11 @@ export const componentEnvelopeSchema = z.discriminatedUnion('componente', [
     texto_respuesta: z.string(),
     componente: z.literal('tabla_categorias'),
     props: tablaCategoriasSchema,
+  }),
+  z.object({
+    texto_respuesta: z.string(),
+    componente: z.literal('ninguno'),
+    props: z.object({}).passthrough(),
   }),
 ])
 
